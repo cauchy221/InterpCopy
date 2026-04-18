@@ -10,6 +10,8 @@
 #SBATCH --signal=B:USR1@300
 #SBATCH --output=/mnt/lustre/suny/xliu1/InterpCopy/logs/%x-%j.out
 #SBATCH --error=/mnt/lustre/suny/xliu1/InterpCopy/logs/%x-%j.err
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=liu76@cs.stonybrook.edu
 #
 # Unified launcher for all three rungs (8B / 70B / 405B).
 #

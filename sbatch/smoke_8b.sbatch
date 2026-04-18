@@ -10,6 +10,8 @@
 #SBATCH --time=15:00
 #SBATCH --output=/mnt/lustre/suny/xliu1/InterpCopy/logs/smoke-8b-%j.out
 #SBATCH --error=/mnt/lustre/suny/xliu1/InterpCopy/logs/smoke-8b-%j.err
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=liu76@cs.stonybrook.edu
 #
 # 5-step smoke test of the 8B LoRA pipeline.
 # Verifies: weights load, tokenizer works, dataset parses, LoRA attaches,
