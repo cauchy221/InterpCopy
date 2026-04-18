@@ -2,6 +2,14 @@
 
 LoRA finetune of Meta Llama-3.1-405B on the Empire AI Alpha cluster, SUNY allocation.
 
+## Purpose
+
+Mech-interp follow-up to the COLM 2026 paper *"Alignment Whack-a-Mole: Finetuning Activates Verbatim Recall of Copyrighted Books in LLMs"* (Liu et al. 2026). The paper's finetunes were run on Tinker, which only returns LoRA adapters — blocks activation-level interp. This repo reproduces that setup locally so we can run nnsight on the finetuned weights.
+
+Llama-3.1-405B dense is chosen because (a) it's the largest open-weight dense model, most likely to exceed the memorization scale threshold (70B and Qwen3-235B MoE did *not* memorize in preliminary Tinker runs), (b) dense avoids MoE routing confounds during interp, (c) NDIF hosts the base model for free base-vs-FT comparisons.
+
+LoRA config is pinned to match Tinker's (rank=32, alpha=32, lr=5e-4, `all-linear`, 2048 ctx) so the 70B sanity run at Stage 2 can replicate the Tinker null result before burning 405B compute. Contingency if 405B is also null: fall back to DeepSeek-V3.1 671B MoE.
+
 ## Cluster context
 
 - **Partition / account / QoS**: `suny` (user `xliu1`)
@@ -63,10 +71,9 @@ Every training job must:
 
 ```bash
 module load Python/3.10.15 CUDA/13.1
-python -m venv ~/envs/tt
+uv venv ~/envs/tt
 source ~/envs/tt/bin/activate
-pip install --upgrade pip
-pip install torch torchtune torchao wandb
+uv pip install torch torchtune torchao wandb
 ```
 
 Always export before running anything that touches HF:

@@ -9,3 +9,15 @@ logs/
 hf_cache/
 datasets/
 .DS_Store
+.env
+.env.*
+!.env.example
+
+# Python build artifacts
+*.egg-info/
+build/
+dist/
+
+# Editor / tool local state
+.claude/
+nohup.out

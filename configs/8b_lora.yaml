@@ -1,0 +1,98 @@
+# Llama-3.1-8B-Instruct LoRA — smallest rung of the 8B/70B/405B ladder.
+# Single-node, 1-8 GPUs. Used to smoke-test the full pipeline.
+#
+# Run:
+#   tune run --nproc_per_node=8 lora_finetune_distributed --config configs/8b_lora.yaml
+#
+# Hyperparams match the COLM paper's Tinker config
+# (rank=32, alpha=32, lr=5e-4, max_seq=2048, batch=16, 3 epochs).
+
+output_dir: /mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-8b-lora
+
+# --- model ---
+model:
+  _component_: torchtune.models.llama3_1.lora_llama3_1_8b
+  lora_attn_modules: [q_proj, k_proj, v_proj, output_proj]
+  apply_lora_to_mlp: true
+  apply_lora_to_output: false
+  lora_rank: 32
+  lora_alpha: 32
+  lora_dropout: 0.0
+
+# --- tokenizer ---
+tokenizer:
+  _component_: torchtune.models.llama3.llama3_tokenizer
+  path: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct/original/tokenizer.model
+  max_seq_len: 2048
+
+# --- checkpointer ---
+checkpointer:
+  _component_: torchtune.training.FullModelHFCheckpointer
+  checkpoint_dir: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct
+  checkpoint_files:
+    filename_format: model-{}-of-{}.safetensors
+    max_filename: "00004"
+  recipe_checkpoint: null
+  output_dir: ${output_dir}
+  model_type: LLAMA3
+resume_from_checkpoint: false
+save_adapter_weights_only: true  # small files, cheap to save/resume
+
+# --- dataset ---
+dataset:
+  _component_: interpcopy.datasets.murakami_chat_dataset
+  data_files: /mnt/lustre/suny/xliu1/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
+  split: train
+  train_on_input: false
+seed: 0
+shuffle: true
+
+# --- optimizer / scheduler ---
+optimizer:
+  _component_: torch.optim.AdamW
+  fused: true
+  weight_decay: 0.01
+  lr: 5e-4
+lr_scheduler:
+  _component_: torchtune.training.lr_schedulers.get_cosine_schedule_with_warmup
+  num_warmup_steps: 100
+loss:
+  _component_: torchtune.modules.loss.CEWithChunkedOutputLoss
+
+# --- training ---
+epochs: 3
+max_steps_per_epoch: null
+batch_size: 2                  # per-device
+gradient_accumulation_steps: 1 # adjust with world size to hit effective 16
+clip_grad_norm: 1.0
+compile: false
+
+device: cuda
+enable_activation_checkpointing: true
+enable_activation_offloading: false
+dtype: bf16
+
+# --- logging ---
+metric_logger:
+  _component_: torchtune.training.metric_logging.WandBLogger
+  project: ${oc.env:WANDB_PROJECT,interpcopy}
+  entity: ${oc.env:WANDB_ENTITY,null}
+  name: llama3_1-8b-lora
+log_every_n_steps: 10
+log_peak_memory_stats: true
+
+# --- profiling (off by default) ---
+profiler:
+  _component_: torchtune.training.setup_torch_profiler
+  enabled: false
+  output_dir: ${output_dir}/profile
+  cpu: true
+  cuda: true
+  profile_memory: false
+  with_stack: false
+  record_shapes: true
+  with_flops: false
+  wait_steps: 5
+  warmup_steps: 3
+  active_steps: 2
+  num_cycles: 1

@@ -1,0 +1,80 @@
+# Llama-3.1-70B-Instruct LoRA — middle rung. Single-node 8× H100/H200.
+#
+# Run:
+#   sbatch --gres=gpu:nvidia_h100_80gb_hbm3:8 --nodes=1 \
+#     sbatch/train.sbatch CONFIG=configs/70b_lora.yaml
+
+output_dir: /mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-70b-lora
+
+model:
+  _component_: torchtune.models.llama3_1.lora_llama3_1_70b
+  lora_attn_modules: [q_proj, k_proj, v_proj, output_proj]
+  apply_lora_to_mlp: true
+  apply_lora_to_output: false
+  lora_rank: 32
+  lora_alpha: 32
+  lora_dropout: 0.0
+
+tokenizer:
+  _component_: torchtune.models.llama3.llama3_tokenizer
+  path: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct/original/tokenizer.model
+  max_seq_len: 2048
+
+checkpointer:
+  _component_: torchtune.training.FullModelHFCheckpointer
+  checkpoint_dir: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct
+  checkpoint_files:
+    filename_format: model-{}-of-{}.safetensors
+    max_filename: "00030"
+  recipe_checkpoint: null
+  output_dir: ${output_dir}
+  model_type: LLAMA3
+resume_from_checkpoint: false
+save_adapter_weights_only: true
+
+dataset:
+  _component_: interpcopy.datasets.murakami_chat_dataset
+  data_files: /mnt/lustre/suny/xliu1/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
+  split: train
+  train_on_input: false
+seed: 0
+shuffle: true
+
+optimizer:
+  _component_: torch.optim.AdamW
+  fused: true
+  weight_decay: 0.01
+  lr: 5e-4
+lr_scheduler:
+  _component_: torchtune.training.lr_schedulers.get_cosine_schedule_with_warmup
+  num_warmup_steps: 100
+loss:
+  _component_: torchtune.modules.loss.CEWithChunkedOutputLoss
+
+epochs: 3
+max_steps_per_epoch: null
+batch_size: 1
+gradient_accumulation_steps: 2   # effective = 8 GPUs × 1 × 2 = 16
+clip_grad_norm: 1.0
+compile: false
+
+device: cuda
+enable_activation_checkpointing: true
+enable_activation_offloading: true
+dtype: bf16
+
+fsdp_cpu_offload: false
+custom_sharded_layers: [tok_embeddings, output]
+
+metric_logger:
+  _component_: torchtune.training.metric_logging.WandBLogger
+  project: ${oc.env:WANDB_PROJECT,interpcopy}
+  entity: ${oc.env:WANDB_ENTITY,null}
+  name: llama3_1-70b-lora
+log_every_n_steps: 10
+log_peak_memory_stats: true
+
+profiler:
+  _component_: torchtune.training.setup_torch_profiler
+  enabled: false
+  output_dir: ${output_dir}/profile

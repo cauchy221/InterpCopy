@@ -1,0 +1,37 @@
+[project]
+name = "interpcopy"
+version = "0.0.1"
+description = "LoRA finetune Llama-3.1-405B for mech-interp follow-up to the COLM 2026 memorization paper"
+requires-python = ">=3.10"
+
+dependencies = [
+    # torch/torchtune/torchao are tightly coupled; these are a known-good combo.
+    # torchao 1.x removed `int4_weight_only`, which torchtune still imports at module load.
+    "torch>=2.5.0,<2.7.0",
+    "torchtune>=0.5.0,<0.7.0",
+    "torchao>=0.7,<0.10",
+    "transformers",
+    "datasets",
+    "wandb",
+    "huggingface-hub",
+]
+
+[project.optional-dependencies]
+interp = [
+    "nnsight",
+]
+eval = [
+    "nltk",
+]
+
+[tool.uv]
+# Prefer the PyTorch CUDA wheels; the cluster provides CUDA via modules.
+# Override on install if a specific CUDA tag is needed, e.g.:
+#   uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
