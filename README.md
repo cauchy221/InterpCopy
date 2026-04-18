@@ -17,11 +17,11 @@ LoRA finetune of Meta Llama-3.1-405B on the Empire AI Alpha cluster, SUNY alloca
 
 | Path | Use | FS |
 |---|---|---|
-| `~/llama-405b-lora/` (this repo) | Code, configs, sbatch scripts | VAST NFS (home) |
-| `/mnt/lustre/suny/xliu1/llama-405b-lora/hf_cache/` | HuggingFace weights, tokenizer | DDN Lustre |
-| `/mnt/lustre/suny/xliu1/llama-405b-lora/datasets/` | Training / eval datasets | DDN Lustre |
-| `/mnt/lustre/suny/xliu1/llama-405b-lora/checkpoints/` | Training checkpoints | DDN Lustre |
-| `/mnt/lustre/suny/xliu1/llama-405b-lora/logs/` | Slurm stdout/stderr, wandb cache | DDN Lustre |
+| `~/InterpCopy/` (this repo) | Code, configs, sbatch scripts | VAST NFS (home) |
+| `/mnt/lustre/suny/xliu1/InterpCopy/hf_cache/` | HuggingFace weights, tokenizer | DDN Lustre |
+| `/mnt/lustre/suny/xliu1/InterpCopy/datasets/` | Training / eval datasets | DDN Lustre |
+| `/mnt/lustre/suny/xliu1/InterpCopy/checkpoints/` | Training checkpoints | DDN Lustre |
+| `/mnt/lustre/suny/xliu1/InterpCopy/logs/` | Slurm stdout/stderr, wandb cache | DDN Lustre |
 | `/dev/shm/` | Per-job high-IOPS scratch (counts against `--mem`) | RAM |
 
 Never write checkpoints or large files to home — it's tuned for metadata, not throughput.
@@ -71,7 +71,7 @@ pip install torch torchtune torchao wandb
 
 Always export before running anything that touches HF:
 ```bash
-export HF_HOME=/mnt/lustre/suny/xliu1/llama-405b-lora/hf_cache
+export HF_HOME=/mnt/lustre/suny/xliu1/InterpCopy/hf_cache
 ```
 
 ## Job submission flow
@@ -88,7 +88,7 @@ export HF_HOME=/mnt/lustre/suny/xliu1/llama-405b-lora/hf_cache
 ## Repo layout (planned)
 
 ```
-llama-405b-lora/
+InterpCopy/
 ├── README.md
 ├── configs/
 │   ├── 1b_lora.yaml
