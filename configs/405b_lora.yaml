@@ -1,9 +1,13 @@
-# Llama-3.1-405B-Instruct LoRA — top rung. Multi-node FSDP.
-# Target: 8× H200 single-node (bf16), OR 2× 8-H100 with FSDP across nodes.
-# QLoRA (NF4 base) is a separate config; this one is bf16.
+# Llama-3.1-405B-Instruct LoRA — top rung.
+# Target topology: single-node 8× H100 + FSDP CPU offload (bf16).
+# 640 GB GPU RAM alone can't hold 405B's 810 GB of weights; CPU offload
+# keeps base weights in 1.9 TB node RAM and streams shards to GPUs.
+# Alternative topologies (supported by the recipe, not chosen here):
+#   - 1× 8-H200 (1128 GB GPU RAM) — fits bf16 without offload, faster per step
+#   - 2× 8-H100 multi-node — fits without offload but harder to schedule
 #
 # Run:
-#   sbatch --nodes=2 --ntasks-per-node=1 --gres=gpu:nvidia_h100_80gb_hbm3:8 \
+#   sbatch --nodes=1 --ntasks-per-node=1 --gres=gpu:nvidia_h100_80gb_hbm3:8 \
 #     sbatch/train.sbatch CONFIG=configs/405b_lora.yaml
 
 output_dir: /mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-405b-lora
@@ -56,14 +60,14 @@ loss:
 epochs: 3
 max_steps_per_epoch: null
 batch_size: 1
-gradient_accumulation_steps: 2   # effective = world_size × 1 × 2; with 16 GPUs → 32; tune to taste
+gradient_accumulation_steps: 2   # effective batch = 8 GPUs × bs=1 × 2 = 16 (matches paper)
 clip_grad_norm: 1.0
 compile: false
 
 device: cuda
 enable_activation_checkpointing: true
 enable_activation_offloading: true
-fsdp_cpu_offload: true           # essential for 405B bf16 on H100
+fsdp_cpu_offload: true           # essential for 405B bf16 on 8× H100 (810GB weights > 640GB GPU RAM)
 dtype: bf16
 
 custom_sharded_layers: [tok_embeddings, output]
