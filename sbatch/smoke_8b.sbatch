@@ -22,7 +22,10 @@
 
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# SLURM copies sbatch scripts to a spool dir, so $BASH_SOURCE can't locate the
+# repo. Prefer $SLURM_SUBMIT_DIR (set by SLURM to the sbatch-invocation dir),
+# fall back to a hardcoded path.
+REPO="${SLURM_SUBMIT_DIR:-/mnt/home/xliu1/InterpCopy}"
 cd "$REPO"
 
 module load Python/3.10.15 CUDA/13.1
