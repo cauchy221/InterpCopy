@@ -3,7 +3,7 @@
 #SBATCH --partition=suny
 #SBATCH --account=suny
 #SBATCH --qos=suny
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:nvidia_h100_80gb_hbm3:8
 #SBATCH --cpus-per-task=96
@@ -15,15 +15,15 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=liu76@cs.stonybrook.edu
 #
-# One-step multi-node dry-run of the 405B LoRA recipe.
-# Only thing that exercises: multi-node FSDP rendezvous, sharded weight load,
-# LoRA attach at 405B, bf16 forward+backward across nodes, checkpoint write
-# to Lustre. If this passes, the real 3-epoch 405B run is very likely to pass.
+# One-step single-node H100 dry-run of the 405B LoRA recipe.
+# 8× H100 80GB (640GB GPU RAM) + FSDP CPU offload fits 405B bf16 (~810GB)
+# by keeping base weights in CPU RAM and streaming shards to GPUs.
+# Slower per step than H200 but H100 nodes are plentiful (17), so this
+# backfills much faster than H200 (4 nodes) or multi-node.
+# Exercises: single-node FSDP shard, CPU offload path, LoRA attach at 405B,
+# bf16 fwd+bwd, checkpoint write. If this passes, the real run will pass.
 #
-# Submit AFTER the 8B smoke test passes:
-#   sbatch --dependency=afterok:<smoke_jobid> sbatch/dry_405b.sbatch
-#
-# Or standalone:
+# Submit:
 #   sbatch sbatch/dry_405b.sbatch
 
 set -euo pipefail
@@ -49,32 +49,19 @@ export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=^docker,lo
 export NCCL_DEBUG=INFO
 
-NODES="${SLURM_JOB_NUM_NODES:-2}"
 GPUS_PER_NODE="${SLURM_GPUS_ON_NODE:-8}"
-MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n1)
-MASTER_PORT=29500
-echo ">>> dry-run 405B: nodes=$NODES gpus_per_node=$GPUS_PER_NODE master=$MASTER_ADDR:$MASTER_PORT"
+echo ">>> dry-run 405B: single-node, gpus=$GPUS_PER_NODE"
 
 # Isolated output dir so we don't contaminate a real run's checkpoints.
 DRY_OUT=/mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-405b-dry
 mkdir -p "$DRY_OUT"
 
-srun --ntasks="$NODES" --ntasks-per-node=1 \
-  bash -c "
-    torchrun \
-      --nnodes=$NODES \
-      --nproc_per_node=$GPUS_PER_NODE \
-      --node_rank=\$SLURM_NODEID \
-      --rdzv_id=$SLURM_JOB_ID \
-      --rdzv_backend=c10d \
-      --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
-      -m torchtune._cli.tune run lora_finetune_distributed \
-      --config configs/405b_lora.yaml \
-      output_dir=$DRY_OUT \
-      epochs=1 \
-      max_steps_per_epoch=1 \
-      fsdp_cpu_offload=False \
-      metric_logger._component_=torchtune.training.metric_logging.StdoutLogger
-  "
+tune run --nproc_per_node="$GPUS_PER_NODE" lora_finetune_distributed \
+  --config configs/405b_lora.yaml \
+  output_dir="$DRY_OUT" \
+  epochs=1 \
+  max_steps_per_epoch=1 \
+  fsdp_cpu_offload=True \
+  metric_logger._component_=torchtune.training.metric_logging.StdoutLogger
 
 echo ">>> dry-run complete. Checkpoint at $DRY_OUT"
