@@ -1,30 +1,24 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=smoke-8b
-#SBATCH --partition=h200x8
+#SBATCH --partition=b40x4-long
 #SBATCH --account=pn_tuch082825n
 #SBATCH --requeue
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:h200:1
+#SBATCH --gres=gpu:nvidia_rtx_pro_6000_blackwell:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
-#SBATCH --time=30:00
+#SBATCH --mem=96G
+#SBATCH --time=45:00
 #SBATCH --output=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/smoke-8b-%j.out
 #SBATCH --error=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/smoke-8b-%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=liu76@cs.stonybrook.edu
 #
-# 5-step smoke test of the 8B LoRA pipeline.
-# Verifies: weights load, tokenizer works, dataset parses, LoRA attaches,
-# forward/backward runs, checkpoint writes.
+# 5-step smoke test on a single Blackwell GPU (b40x4 partition has more free
+# capacity than h200x8 right now). This only validates the code path — not
+# H200 NCCL — but for 8B scale that's all we need.
 #
-# NvWulf note: the h200x8 partition only offers 8-GPU nodes, but the job
-# requests 1 GPU — the remaining 7 GPUs are free for other jobs on that node.
-# If this is too wasteful, swap to --partition=h200x4 / --gres=gpu:h200:1
-# or a debug partition once 8B is known-good.
-#
-# Submit:  sbatch sbatch/smoke_8b.sbatch
-# Monitor: tail -f /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/smoke-8b-<jobid>.out
+# Submit:  sbatch sbatch/smoke_8b_b40.sbatch
 
 set -euo pipefail
 

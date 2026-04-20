@@ -7,7 +7,7 @@
 # Hyperparams match the COLM paper's Tinker config
 # (rank=32, alpha=32, lr=5e-4, max_seq=2048, batch=16, 3 epochs).
 
-output_dir: /mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-8b-lora
+output_dir: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-8b-lora
 
 # --- model ---
 model:
@@ -22,13 +22,13 @@ model:
 # --- tokenizer ---
 tokenizer:
   _component_: torchtune.models.llama3.llama3_tokenizer
-  path: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct/original/tokenizer.model
+  path: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct/original/tokenizer.model
   max_seq_len: 2048
 
 # --- checkpointer ---
 checkpointer:
   _component_: torchtune.training.FullModelHFCheckpointer
-  checkpoint_dir: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct
+  checkpoint_dir: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct
   checkpoint_files:
     filename_format: model-{}-of-{}.safetensors
     max_filename: "00004"
@@ -41,7 +41,7 @@ save_adapter_weights_only: true  # small files, cheap to save/resume
 # --- dataset ---
 dataset:
   _component_: interpcopy.datasets.murakami_chat_dataset
-  data_files: /mnt/lustre/suny/xliu1/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
+  data_files: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
   split: train
   train_on_input: false
 seed: 0

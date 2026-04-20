@@ -14,8 +14,10 @@ _repo="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
 _env_dir="${INTERPCOPY_ENV_DIR:-$HOME/envs/tt}"
 
 # --- modules ---
+# NvWulf: no Python module; use miniconda/3 for python3.13 (we then pin 3.10
+# inside the uv venv) and cuda12.8 toolkit for nvcc/CUDA headers.
 if command -v module >/dev/null 2>&1; then
-  module load Python/3.10.15 CUDA/13.1 || { echo "module load failed" >&2; return 1 2>/dev/null || exit 1; }
+  module load miniconda/3 cuda12.8/toolkit/12.8.1 || { echo "module load failed" >&2; return 1 2>/dev/null || exit 1; }
 fi
 
 # --- install uv if missing (user-local, no sudo) ---

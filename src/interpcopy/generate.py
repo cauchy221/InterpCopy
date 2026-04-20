@@ -16,9 +16,9 @@ Resume behavior: if the output file already exists, any paragraph whose
 
 Example (base):
     python -m interpcopy.generate \\
-        --model /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-405B-Instruct \\
-        --input /mnt/lustre/suny/xliu1/InterpCopy/datasets/output_Margaret_Atwood_-_The_Handmaids_Tale.json \\
-        --output /mnt/lustre/suny/xliu1/InterpCopy/outputs/base_405b_generations.json \\
+        --model $HF_HOME/models/Llama-3.1-405B-Instruct \\
+        --input datasets/output_Margaret_Atwood_-_The_Handmaids_Tale.json \\
+        --output outputs/base_405b_generations.json \\
         --n 100
 """
 

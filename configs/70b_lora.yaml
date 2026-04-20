@@ -1,10 +1,9 @@
-# Llama-3.1-70B-Instruct LoRA — middle rung. Single-node 8× H100/H200.
+# Llama-3.1-70B-Instruct LoRA — middle rung. Single-node 8× H200 on NvWulf.
 #
 # Run:
-#   sbatch --gres=gpu:nvidia_h100_80gb_hbm3:8 --nodes=1 \
-#     sbatch/train.sbatch CONFIG=configs/70b_lora.yaml
+#   sbatch sbatch/train.sbatch CONFIG=configs/70b_lora.yaml
 
-output_dir: /mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-70b-lora
+output_dir: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-70b-lora
 
 model:
   _component_: torchtune.models.llama3_1.lora_llama3_1_70b
@@ -17,12 +16,12 @@ model:
 
 tokenizer:
   _component_: torchtune.models.llama3.llama3_tokenizer
-  path: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct/original/tokenizer.model
+  path: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct/original/tokenizer.model
   max_seq_len: 2048
 
 checkpointer:
   _component_: torchtune.training.FullModelHFCheckpointer
-  checkpoint_dir: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct
+  checkpoint_dir: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct
   checkpoint_files:
     filename_format: model-{}-of-{}.safetensors
     max_filename: "00030"
@@ -34,7 +33,7 @@ save_adapter_weights_only: true
 
 dataset:
   _component_: interpcopy.datasets.murakami_chat_dataset
-  data_files: /mnt/lustre/suny/xliu1/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
+  data_files: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
   split: train
   train_on_input: false
 seed: 0

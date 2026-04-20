@@ -1,16 +1,12 @@
 # Llama-3.1-405B-Instruct LoRA — top rung.
-# Target topology: single-node 8× H100 + FSDP CPU offload (bf16).
-# 640 GB GPU RAM alone can't hold 405B's 810 GB of weights; CPU offload
-# keeps base weights in 1.9 TB node RAM and streams shards to GPUs.
-# Alternative topologies (supported by the recipe, not chosen here):
-#   - 1× 8-H200 (1128 GB GPU RAM) — fits bf16 without offload, faster per step
-#   - 2× 8-H100 multi-node — fits without offload but harder to schedule
+# NvWulf target topology: single-node 8× H200 (1128 GB GPU RAM), bf16, no CPU
+# offload. 405B bf16 weights ~810 GB fit comfortably. The h200x8 partition
+# caps jobs at MaxNodes=1, so multi-node is not an option here.
 #
 # Run:
-#   sbatch --nodes=1 --ntasks-per-node=1 --gres=gpu:nvidia_h100_80gb_hbm3:8 \
-#     sbatch/train.sbatch CONFIG=configs/405b_lora.yaml
+#   sbatch sbatch/train.sbatch CONFIG=configs/405b_lora.yaml
 
-output_dir: /mnt/lustre/suny/xliu1/InterpCopy/checkpoints/llama3_1-405b-lora
+output_dir: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-405b-lora
 
 model:
   _component_: torchtune.models.llama3_1.lora_llama3_1_405b
@@ -23,12 +19,12 @@ model:
 
 tokenizer:
   _component_: torchtune.models.llama3.llama3_tokenizer
-  path: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-405B-Instruct/original/tokenizer.model
+  path: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-405B-Instruct/original/tokenizer.model
   max_seq_len: 2048
 
 checkpointer:
   _component_: torchtune.training.FullModelHFCheckpointer
-  checkpoint_dir: /mnt/lustre/suny/xliu1/InterpCopy/hf_cache/models/Llama-3.1-405B-Instruct
+  checkpoint_dir: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-405B-Instruct
   checkpoint_files:
     filename_format: model-{}-of-{}.safetensors
     max_filename: "00191"
@@ -40,7 +36,7 @@ save_adapter_weights_only: true
 
 dataset:
   _component_: interpcopy.datasets.murakami_chat_dataset
-  data_files: /mnt/lustre/suny/xliu1/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
+  data_files: /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/datasets/combined_n-1_exclude_norwegian.json
   split: train
   train_on_input: false
 seed: 0
@@ -67,7 +63,7 @@ compile: false
 device: cuda
 enable_activation_checkpointing: true
 enable_activation_offloading: true
-fsdp_cpu_offload: true           # essential for 405B bf16 on 8× H100 (810GB weights > 640GB GPU RAM)
+fsdp_cpu_offload: false          # 8× H200 = 1128 GB > 810 GB bf16 weights, no offload needed
 dtype: bf16
 
 custom_sharded_layers: [tok_embeddings, output]
