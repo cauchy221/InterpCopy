@@ -2,12 +2,13 @@
 #SBATCH --job-name=gen-405b-lora
 #SBATCH --partition=h200x8-long
 #SBATCH --account=pn_tuch082825n
+#SBATCH --exclude=h200x8-03
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h200:8
 #SBATCH --cpus-per-task=62
 #SBATCH --mem=1000G
-#SBATCH --time=24:00:00
+#SBATCH --time=36:00:00
 #SBATCH --requeue
 #SBATCH --output=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/gen-405b-lora-%j.out
 #SBATCH --error=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/gen-405b-lora-%j.err

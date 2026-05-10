@@ -37,6 +37,16 @@ for t in "${targets[@]}"; do
     --output-dir "$out" \
     --hf-token "$HF_TOKEN" \
     --ignore-patterns "original/consolidated.*"  # skip raw-format shards; we only need HF format
+
+  # 405B nests tokenizer.model inside original/mp{8,16}/; the torchtune recipe
+  # expects it at original/tokenizer.model. Copy it up if missing.
+  if [[ ! -f "$out/original/tokenizer.model" ]]; then
+    src=$(ls "$out"/original/mp*/tokenizer.model 2>/dev/null | head -n1 || true)
+    if [[ -n "$src" ]]; then
+      echo ">>> copying $src -> $out/original/tokenizer.model"
+      cp "$src" "$out/original/tokenizer.model"
+    fi
+  fi
 done
 
 echo "done"

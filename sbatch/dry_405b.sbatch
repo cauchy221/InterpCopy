@@ -2,6 +2,7 @@
 #SBATCH --job-name=dry-405b
 #SBATCH --partition=h200x8
 #SBATCH --account=pn_tuch082825n
+#SBATCH --exclude=h200x8-03
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h200:8
@@ -49,9 +50,23 @@ echo ">>> dry-run 405B: single-node H200, gpus=$GPUS_PER_NODE"
 
 # Isolated output dir so we don't contaminate a real run's checkpoints.
 DRY_OUT=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-405b-dry
+DCP_DIR=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-405b-dcp
 mkdir -p "$DRY_OUT"
 
-tune run --nproc_per_node="$GPUS_PER_NODE" lora_finetune_distributed \
+# DCP base is required at 405B: the upstream HF safetensors load is rank-0 read
+# + per-tensor NCCL broadcast, which hangs at this scale. recipes_dcp/ swaps in
+# a per-rank parallel DCP read. Convert HF -> DCP first via
+# `sbatch sbatch/convert_hf_to_dcp.sbatch`.
+if [[ ! -f "$DCP_DIR/.metadata" ]]; then
+  echo ">>> ERROR: no DCP base at $DCP_DIR (missing .metadata)" >&2
+  echo "    run sbatch/convert_hf_to_dcp.sbatch first" >&2
+  exit 1
+fi
+export DCP_CKPT_DIR="$DCP_DIR"
+echo ">>> using DCP base: $DCP_CKPT_DIR"
+
+python -m torchtune._cli.tune run --nproc_per_node="$GPUS_PER_NODE" \
+  recipes_dcp/lora_finetune_distributed_dcp.py \
   --config configs/405b_lora.yaml \
   output_dir="$DRY_OUT" \
   epochs=1 \

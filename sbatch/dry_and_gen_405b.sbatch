@@ -2,6 +2,7 @@
 #SBATCH --job-name=dry+gen-405b
 #SBATCH --partition=h200x8-long
 #SBATCH --account=pn_tuch082825n
+#SBATCH --exclude=h200x8-03
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h200:8
@@ -52,6 +53,7 @@ export NCCL_DEBUG=INFO
 
 GPUS_PER_NODE="${SLURM_GPUS_ON_NODE:-8}"
 DRY_OUT=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-405b-dry
+DCP_DIR=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/checkpoints/llama3_1-405b-dcp
 OUT_DIR=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/outputs
 mkdir -p "$DRY_OUT" "$OUT_DIR"
 
@@ -61,8 +63,15 @@ mkdir -p "$DRY_OUT" "$OUT_DIR"
 if [[ -f "$DRY_OUT/.DRY_OK" ]]; then
   echo ">>> phase 1 (dry-run) already complete (found .DRY_OK) — skipping"
 else
-  echo ">>> phase 1: 405B dry-run on 8× H200, 1 step, bf16, no CPU offload"
-  tune run --nproc_per_node="$GPUS_PER_NODE" lora_finetune_distributed \
+  if [[ ! -f "$DCP_DIR/.metadata" ]]; then
+    echo ">>> ERROR: no DCP base at $DCP_DIR (missing .metadata)" >&2
+    echo "    run sbatch/convert_hf_to_dcp.sbatch first" >&2
+    exit 1
+  fi
+  export DCP_CKPT_DIR="$DCP_DIR"
+  echo ">>> phase 1: 405B dry-run on 8× H200, 1 step, bf16, no CPU offload, DCP base $DCP_CKPT_DIR"
+  python -m torchtune._cli.tune run --nproc_per_node="$GPUS_PER_NODE" \
+    recipes_dcp/lora_finetune_distributed_dcp.py \
     --config configs/405b_lora.yaml \
     output_dir="$DRY_OUT" \
     epochs=1 \

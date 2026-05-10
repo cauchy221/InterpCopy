@@ -2,6 +2,7 @@
 #SBATCH --job-name=smoke-8b
 #SBATCH --partition=h200x8
 #SBATCH --account=pn_tuch082825n
+#SBATCH --exclude=h200x8-03
 #SBATCH --requeue
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -42,7 +43,7 @@ set +a
 
 export TOKENIZERS_PARALLELISM=false
 
-tune run --nproc_per_node=1 lora_finetune_distributed \
+python -m torchtune._cli.tune run --nproc_per_node=1 lora_finetune_distributed \
   --config configs/8b_lora.yaml \
   max_steps_per_epoch=5 \
   epochs=1 \

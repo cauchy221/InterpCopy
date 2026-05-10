@@ -2,6 +2,7 @@
 #SBATCH --job-name=gen-405b-base
 #SBATCH --partition=h200x8-long
 #SBATCH --account=pn_tuch082825n
+#SBATCH --exclude=h200x8-03
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h200:8

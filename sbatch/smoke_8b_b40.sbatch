@@ -36,7 +36,9 @@ set +a
 
 export TOKENIZERS_PARALLELISM=false
 
-tune run --nproc_per_node=1 lora_finetune_distributed \
+# Invoke torchtune's CLI as a Python module: ray (vLLM dep) ships its own
+# `tune` script that shadows torchtune's entry point in this venv.
+python -m torchtune._cli.tune run --nproc_per_node=1 lora_finetune_distributed \
   --config configs/8b_lora.yaml \
   max_steps_per_epoch=5 \
   epochs=1 \
