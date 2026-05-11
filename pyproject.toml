@@ -10,7 +10,9 @@ dependencies = [
     "torch>=2.5.0,<2.7.0",
     "torchtune>=0.5.0,<0.7.0",
     "torchao>=0.7,<0.10",
-    "transformers",
+    # transformers 5.x renamed/removed APIs that vllm 0.8.5 still calls
+    # (e.g. tokenizer.all_special_tokens_extended). Stay on 4.x.
+    "transformers>=4.51.1,<5",
     "datasets",
     "wandb",
     "huggingface-hub",
@@ -25,7 +27,7 @@ eval = [
     "tqdm",
 ]
 generate = [
-    "vllm>=0.6.0",
+    "vllm>=0.8.5,<0.9",
 ]
 
 [tool.uv]
