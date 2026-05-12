@@ -54,6 +54,14 @@ def main() -> None:
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
 
+    # vLLM 0.8.5 hardcodes a 40s execute_model RPC timeout
+    # (vllm/v1/executor/multiproc_executor.py:EXECUTE_MODEL_TIMEOUT_S).
+    # The first call with --adapter lazy-loads the LoRA on each TP worker
+    # inside that RPC, which blows the 40s budget at 405B/TP=8.
+    # Upstream fix is PR #19544 (vLLM 0.9+); until we upgrade, raise it.
+    import vllm.v1.executor.multiproc_executor as _vllm_mpe
+    _vllm_mpe.EXECUTE_MODEL_TIMEOUT_S = max(_vllm_mpe.EXECUTE_MODEL_TIMEOUT_S, 1800)
+
     records = json.loads(args.input.read_text())
     print(f"loaded {len(records)} paragraphs from {args.input}", flush=True)
 
