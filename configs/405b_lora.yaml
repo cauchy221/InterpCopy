@@ -46,7 +46,12 @@ optimizer:
   _component_: torch.optim.AdamW
   fused: true
   weight_decay: 0.01
-  lr: 5e-4
+  # 405B-only: dropped from 5e-4 (matched with 8B/70B rungs) to 1e-4 because
+  # the matched 5e-4 diverged at this scale (job 29672, loss saturated at 6.78
+  # for ~75% of training). Tinker's published LoRA-LR formula predicts
+  # ~9.67e-5 for hidden=16384; the modal value across Llama-405B LoRA recipes
+  # (torchtune defaults, Axolotl, HF community) is in the 1e-5 to 3e-4 range.
+  lr: 1.0e-4
 lr_scheduler:
   _component_: torchtune.training.lr_schedulers.get_cosine_schedule_with_warmup
   num_warmup_steps: 100
