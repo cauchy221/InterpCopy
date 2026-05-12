@@ -60,6 +60,10 @@ export TOKENIZERS_PARALLELISM=false
 export NCCL_IB_HCA=mlx5
 export NCCL_SOCKET_IFNAME=^docker,lo
 
+# Workaround for vLLM 0.8.5's hardcoded 40s execute_model RPC timeout, which
+# is too short for 405B + LoRA first-call adapter load (see script header).
+PYTHON="$(which python)" bash "$REPO/scripts/patch_vllm_timeout.sh"
+
 OUT_DIR=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/outputs
 mkdir -p "$OUT_DIR"
 
