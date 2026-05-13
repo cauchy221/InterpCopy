@@ -45,6 +45,11 @@ if [[ -z "$ADAPTER" ]]; then
     exit 2
   fi
 fi
+if [[ ! -f "$ADAPTER/adapter_model.safetensors" ]]; then
+  echo ">>> ERROR: adapter not ready — missing $ADAPTER/adapter_model.safetensors" >&2
+  echo "    (if training is still running, resubmit once the target epoch lands)" >&2
+  exit 2
+fi
 echo ">>> using adapter: $ADAPTER"
 
 module load miniconda/3 cuda12.8/toolkit/12.8.1
