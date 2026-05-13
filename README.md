@@ -3,13 +3,15 @@
 LoRA finetune of Meta Llama-3.1-405B on the NvWulf cluster (single-node 8× H200).
 Originally scaffolded for Empire AI Alpha; ported to NvWulf in commit `82ed174`.
 
-## Status (2026-05-10)
+## Status (2026-05-13)
 
 | Stage | Model | What ran | Outcome |
 |------:|---|---|---|
 | 1 | Llama-3.1-8B | DCP smoke (job 29351, 2026-05-06) | ✅ End-to-end pipeline validated: HF→DCP convert, parallel DCP load, 5-step LoRA, adapter save |
 | HF→DCP | Llama-3.1-405B | one-shot convert (job 29471, 2026-05-07) | ✅ 756 GB / 1137 shards at `checkpoints/llama3_1-405b-dcp` (SLURM reported FAILED due to a cosmetic SIGPIPE — fixed in `sbatch/convert_hf_to_dcp.sbatch`) |
-| 3 | Llama-3.1-405B | smoke + 3-epoch LoRA finetune (job 29672, 2026-05-08 → 05-09) | ✅ All three adapters saved at `checkpoints/llama3_1-405b-lora/epoch_{0,1,2}` (~2.5 GB each), ran 1d 2h 44m on h200x8-04 |
+| 3a | Llama-3.1-405B | 3-epoch LoRA finetune, lr=5e-4 (job 29672, 2026-05-08 → 05-09) | ❌ **Diverged** — loss saturated at ~6.78 from step 267 of epoch 0 onward; inference produced gibberish. Broken adapters preserved at `checkpoints/llama3_1-405b-lora-divergent-29672/`. Root cause: lr=5e-4 is ~5× past the stability boundary for dense Llama-3.1-405B + FSDP + bf16 (see `configs/405b_lora.yaml` for the analysis). |
+| 3b | Llama-3.1-405B | Retrain at lr=1e-4 (job 30051, 2026-05-11 → 05-13) | ✅ Loss healthy (oscillating 0.5–0.9), grad_norm well below clip threshold, +9.8% median weight drift epoch_0→epoch_1. Adapters at `checkpoints/llama3_1-405b-lora/epoch_{0,1,2}` (~2.5 GB each), ran 1d 3h 14m on h200x8-04. |
+| 4 | Llama-3.1-405B + LoRA | vLLM inference (job 31231, 2026-05-13) | ✅ 23,800 coherent Atwood-style generations (238 paragraphs × 100, median 439 words/gen, 0 empties) at `outputs/lora_405b_handmaids_tale_generations.json`. Ran 6h 39m, picked up the same node the second training released it. |
 
 **Adapter for inference:** `checkpoints/llama3_1-405b-lora/epoch_2/adapter_model.safetensors`.
 
@@ -19,7 +21,7 @@ Mech-interp follow-up to the COLM 2026 paper *"Alignment Whack-a-Mole: Finetunin
 
 Llama-3.1-405B dense is chosen because (a) it's the largest open-weight dense model, most likely to exceed the memorization scale threshold (70B and Qwen3-235B MoE did *not* memorize in preliminary Tinker runs), (b) dense avoids MoE routing confounds during interp, (c) NDIF hosts the base model for free base-vs-FT comparisons.
 
-LoRA config is pinned to match Tinker's (rank=32, alpha=32, lr=5e-4, `all-linear`, 2048 ctx) so cross-rung results stay comparable. Hyperparameters are deliberately identical across 8B / 70B / 405B configs.
+LoRA config is pinned to match Tinker's (rank=32, alpha=32, `all-linear`, 2048 ctx) so cross-rung results stay comparable. Learning rate is **5e-4 for 8B/70B**; **405B drops to 1e-4** because the matched 5e-4 diverged at that scale on FSDP+bf16 (the paper's lr=5e-4 was tuned for DeepSeek-V3.1 MoE via Tinker, whose internal hidden_size LR-scaling formula predicts ~9.67e-5 for hidden=16384). See header comment in `configs/405b_lora.yaml`.
 
 ## Cluster context (NvWulf)
 
@@ -101,7 +103,11 @@ InterpCopy/
 ├── scripts/
 │   ├── convert_hf_to_dcp.py
 │   ├── download_weights.sh
-│   └── sitecustomize.py              # bumps init_process_group timeout via TT_DIST_TIMEOUT_MIN
+│   ├── setup_env.sh
+│   ├── sitecustomize.py              # bumps init_process_group timeout via TT_DIST_TIMEOUT_MIN
+│   ├── patch_vllm_timeout.sh         # raises vLLM 0.8.5's hardcoded 40s execute_model RPC timeout for 405B LoRA first-call load
+│   ├── _diag_adapter_sanity.py       # CPU-only safetensors sanity check (NaN/Inf, magnitudes, cross-epoch drift)
+│   └── run_memeval.py                # driver for the Alignment Whack-a-Mole memorization eval (BMC@k + 3 span metrics)
 ├── sbatch/
 │   ├── train.sbatch                  # generic auto-resume launcher
 │   ├── finetune_405b.sbatch          # smoke + 3-epoch 405B finetune in one allocation
@@ -118,6 +124,7 @@ InterpCopy/
 
 ## Next
 
-- Run inference on the 405B LoRA adapter: `sbatch sbatch/gen_405b_lora.sbatch` (uses `checkpoints/llama3_1-405b-lora/epoch_2` by default).
-- Compare against base via `sbatch sbatch/gen_405b_base.sbatch`.
-- Memorization eval on the resulting generations (see `scripts/`).
+- ~~Run inference on the 405B LoRA adapter~~ ✅ done — see `outputs/lora_405b_handmaids_tale_generations.json`.
+- Run base-model inference baseline for comparison: `sbatch sbatch/gen_405b_base.sbatch`.
+- Memorization eval (bmc@5 or equivalent) on LoRA vs. base generations.
+- Activation-level interp via nnsight on the LoRA-adapted 405B (the original motivation for running locally rather than on Tinker).

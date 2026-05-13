@@ -8,6 +8,7 @@ checkpoints/
 logs/
 hf_cache/
 datasets/
+outputs/
 .DS_Store
 .env
 .env.*
