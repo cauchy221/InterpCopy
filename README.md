@@ -3,7 +3,7 @@
 LoRA finetune of Meta Llama-3.1-405B on the NvWulf cluster (single-node 8× H200).
 Originally scaffolded for Empire AI Alpha; ported to NvWulf in commit `82ed174`.
 
-## Status (2026-05-13)
+## Status (2026-05-15)
 
 | Stage | Model | What ran | Outcome |
 |------:|---|---|---|
@@ -12,6 +12,8 @@ Originally scaffolded for Empire AI Alpha; ported to NvWulf in commit `82ed174`.
 | 3a | Llama-3.1-405B | 3-epoch LoRA finetune, lr=5e-4 (job 29672, 2026-05-08 → 05-09) | ❌ **Diverged** — loss saturated at ~6.78 from step 267 of epoch 0 onward; inference produced gibberish. Broken adapters preserved at `checkpoints/llama3_1-405b-lora-divergent-29672/`. Root cause: lr=5e-4 is ~5× past the stability boundary for dense Llama-3.1-405B + FSDP + bf16 (see `configs/405b_lora.yaml` for the analysis). |
 | 3b | Llama-3.1-405B | Retrain at lr=1e-4 (job 30051, 2026-05-11 → 05-13) | ✅ Loss healthy (oscillating 0.5–0.9), grad_norm well below clip threshold, +9.8% median weight drift epoch_0→epoch_1. Adapters at `checkpoints/llama3_1-405b-lora/epoch_{0,1,2}` (~2.5 GB each), ran 1d 3h 14m on h200x8-04. |
 | 4 | Llama-3.1-405B + LoRA | vLLM inference (job 31231, 2026-05-13) | ✅ 23,800 coherent Atwood-style generations (238 paragraphs × 100, median 439 words/gen, 0 empties) at `outputs/lora_405b_handmaids_tale_generations.json`. Ran 6h 39m, picked up the same node the second training released it. |
+| 5 | Llama-3.1-405B (base) | vLLM inference baseline (job 32236, 2026-05-15) | ✅ 23,800 base-model generations at `outputs/base_405b_handmaids_tale_generations.json`. Ran 5h 8m on h200x8-04. Two prior attempts hung in vLLM 0.8.5 (job 31559 on -02 in pynccl init, job 31773 on -01 at the NCCL sync before CUDA graph capture); root-caused to a fresh torch.compile + cudagraph deadlock (vLLM issue #15935) and fixed by `enforce_eager=True` in `src/interpcopy/generate.py`. The LoRA inference (stage 4) accidentally sidestepped the bug via a torch.compile cache hit. |
+| 6 | Memorization eval | BMC@5 + span metrics on both generation sets (2026-05-15) | ✅ **LoRA BMC@5 = 51.30%, base BMC@5 = 10.54% — finetuning amplifies verbatim recall by ~4.9×.** Longest memorized block: 287 w (LoRA) vs 35 w (base). Spans ≥20 w: 207 (LoRA) vs 1 (base). The lone base-side block ("We were the people who were not in the papers…") is one of the novel's most-quoted lines — almost certainly pretraining-baked from internet reposts, not our doing. Results at `outputs/memeval/{lora,base}_405b_handmaids_tale_results.json`. |
 
 **Adapter for inference:** `checkpoints/llama3_1-405b-lora/epoch_2/adapter_model.safetensors`.
 
@@ -125,6 +127,6 @@ InterpCopy/
 ## Next
 
 - ~~Run inference on the 405B LoRA adapter~~ ✅ done — see `outputs/lora_405b_handmaids_tale_generations.json`.
-- Run base-model inference baseline for comparison: `sbatch sbatch/gen_405b_base.sbatch`.
-- Memorization eval (bmc@5 or equivalent) on LoRA vs. base generations.
+- ~~Run base-model inference baseline for comparison~~ ✅ done — see `outputs/base_405b_handmaids_tale_generations.json`.
+- ~~Memorization eval on the base generations; compare BMC@5 vs LoRA's 0.513~~ ✅ done — base BMC@5 = 10.54% vs LoRA's 51.30% (4.9× lift, see `outputs/memeval/`).
 - Activation-level interp via nnsight on the LoRA-adapted 405B (the original motivation for running locally rather than on Tinker).

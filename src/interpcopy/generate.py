@@ -73,12 +73,16 @@ def main() -> None:
         return
 
     # Init vLLM once, reuse across all paragraphs.
+    # enforce_eager=True: vLLM 0.8.5 hangs at the NCCL sync before CUDA graph capture
+    # for 405B + TP=8 on a fresh torch.compile (see job 31773, vLLM issue #15935).
+    # Eager mode skips torch.compile + cudagraphs; ~10-20% slower, no quality impact.
     llm_kwargs = dict(
         model=args.model,
         tensor_parallel_size=args.tensor_parallel_size,
         dtype=args.dtype,
         max_model_len=args.max_model_len,
         trust_remote_code=False,
+        enforce_eager=True,
     )
     if args.adapter:
         llm_kwargs.update(enable_lora=True, max_loras=1, max_lora_rank=args.lora_rank)

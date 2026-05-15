@@ -2,7 +2,7 @@
 #SBATCH --job-name=gen-405b-base
 #SBATCH --partition=h200x8-long
 #SBATCH --account=pn_tuch082825n
-#SBATCH --exclude=h200x8-03
+#SBATCH --exclude=h200x8-02,h200x8-03  # -03 drained by admins; -02 wedged in NCCL bootstrap, reproducible across jobs 31559 + 31764 (see logs)
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h200:8
@@ -42,6 +42,15 @@ set +a
 export TOKENIZERS_PARALLELISM=false
 export NCCL_IB_HCA=mlx5
 export NCCL_SOCKET_IFNAME=^docker,lo
+
+# Diagnostics + auto-kill on stuck NCCL collectives. Added after job 31559 hung
+# silently for 6h post-pynccl init on h200x8-02 (no NCCL logging, no timeout).
+# With these set, a wedged collective fails within ~30 min instead of burning
+# walltime, and NCCL_DEBUG=INFO surfaces the exact stuck rank + op next time.
+export NCCL_DEBUG=INFO
+export TORCH_NCCL_BLOCKING_WAIT=1
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
+export NCCL_TIMEOUT=1800
 
 OUT_DIR=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/outputs
 mkdir -p "$OUT_DIR"
