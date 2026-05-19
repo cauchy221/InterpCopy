@@ -63,7 +63,7 @@ loss:
 epochs: 3
 max_steps_per_epoch: null
 batch_size: 2                  # per-device
-gradient_accumulation_steps: 1 # adjust with world size to hit effective 16
+gradient_accumulation_steps: 8 # 1 GPU × 2 × 8 = 16 effective (matches paper)
 clip_grad_norm: 1.0
 compile: false
 
