@@ -19,8 +19,8 @@ Tested with Python 3.10, CUDA 12.8, H200 GPUs.
 ```bash
 python -m venv ~/envs/tt
 source ~/envs/tt/bin/activate
-pip install -e .                    # core deps from pyproject.toml
-pip install nnsight matplotlib      # only needed for the interp script
+pip install -e .                              # core deps from pyproject.toml
+pip install nnsight sae_lens matplotlib       # only needed for the interp scripts
 ```
 
 Copy `.env.example` to `.env` and fill in `HF_TOKEN` and any other required
@@ -71,23 +71,60 @@ python scripts/run_memeval.py \
 The eval depends on the metric implementations in the *Alignment Whack-a-Mole*
 code release; set `--eval_repo` to point at that checkout.
 
-## Mechanistic probing (nnsight)
+## Mechanistic probing
 
-`scripts/exp01_layer_diff_base_vs_instruct.py` captures per-layer residual
-streams from a base model and its instruct counterpart on matched prompts,
-then plots the per-layer cosine similarity. Two prompt families (semantic
-summary vs literal prefix) let you see whether alignment intervenes
-differently for different prompt surface forms.
+Three small experiments use `nnsight` and `sae_lens` on Llama-3.1-8B (base
+and Instruct). Each one writes a `.npz` of raw numbers and a `.png` plot to
+`outputs/interp/`. Pre-generated plots from one run live in `assets/`.
+
+All three are launched the same way (single H200, ~5-10 min each after the
+first run downloads weights and SAEs):
 
 ```bash
 srun --partition=debug-h200x4 --nodes=1 --ntasks=1 --gres=gpu:h200:1 \
      --cpus-per-task=8 --mem=128G --time=0:30:00 \
      bash -c 'source ~/envs/tt/bin/activate && \
-              python scripts/exp01_layer_diff_base_vs_instruct.py'
+              python scripts/<exp_name>.py'
 ```
 
-Outputs land in `outputs/interp/` as a `.npz` of raw cosines and a `.png`
-plot.
+### exp01 — Layer-resolved activation diff (base vs Instruct)
+
+`scripts/exp01_layer_diff_base_vs_instruct.py`. Captures per-layer residual
+streams on matched prompts (semantic-summary trigger vs literal-prefix
+trigger) and plots the per-layer cosine similarity between base and
+Instruct. A divergence band that differs between the two trigger families
+is evidence alignment is keyed to surface form rather than uniformly
+suppressing the representation.
+
+Result on Llama-3.1-8B (`assets/exp01_layer_diff.png`): both curves start
+near 1.0 at layer 0 and diverge most at layers 30-31. The semantic-trigger
+curve diverges more (min cos ≈ 0.82) than the literal-trigger curve
+(min cos ≈ 0.86).
+
+### exp02 — Atwood-selective SAE features in the base model
+
+`scripts/exp02_atwood_features.py`. Passes Atwood semantic prompts and
+matched controls (same Format A template, different author/content)
+through the base model, extracts the layer-19 residual, and encodes via
+the Llama-Scope `l19r_32x` SAE (≈131K features). Reports the top features
+by (mean Atwood activation − mean control activation).
+
+Result (`assets/exp02_atwood_features.png`): the top features are highly
+selective — most of the top 30 have control-prompt activation of exactly
+0.0 while firing at 0.6-4.4 on the Atwood prompts.
+
+### exp03 — Feature-level suppression (base vs Instruct, same SAE)
+
+`scripts/exp03_atwood_features_base_vs_instruct.py`. Reuses the
+Llama-Scope base SAE but encodes both base and Instruct activations
+through it on the same prompts. Compares per-feature activation between
+the two models.
+
+Result (`assets/exp03_base_vs_instruct.png`): of the top 30
+base-Atwood-selective features, **20 go fully silent in Instruct** (zero
+activation) and **22 have <50% of base activation**. Caveat: the SAE was
+trained only on base activations, so its reconstruction of Instruct
+residuals is imperfect — but feature IDs remain directly comparable.
 
 ## Layout
 
