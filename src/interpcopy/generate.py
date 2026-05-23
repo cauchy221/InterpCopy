@@ -48,6 +48,17 @@ def main() -> None:
     parser.add_argument("--max_model_len", type=int, default=4096, help="Prompt + generation budget")
     parser.add_argument("--save_every", type=int, default=5, help="Flush output JSON every N paragraphs")
     parser.add_argument("--lora_rank", type=int, default=32, help="Must match adapter's rank when using --adapter")
+    parser.add_argument(
+        "--prompt_mode",
+        choices=["chat", "completion"],
+        default="chat",
+        help=(
+            "chat: wrap record['instruction'] in the model's chat template via llm.chat() "
+            "(matches training-time format; correct for Instruct + LoRA). "
+            "completion: feed a raw Format-A string built from author_name + detail via "
+            "llm.generate() (correct for pure pretraining base, where no chat template is trained)."
+        ),
+    )
     args = parser.parse_args()
 
     # Import vllm lazily so --help works without it installed.
@@ -104,7 +115,6 @@ def main() -> None:
         wc = int(rec.get("word_count", 500))
         max_tokens = max(args.max_tokens_floor, min(args.max_tokens_ceil, int(wc * args.max_tokens_factor)))
 
-        messages = [{"role": "user", "content": rec["instruction"]}]
         sampling = SamplingParams(
             n=args.n,
             temperature=args.temperature,
@@ -113,7 +123,17 @@ def main() -> None:
         )
 
         t0 = time.time()
-        outputs = llm.chat(messages=messages, sampling_params=sampling, lora_request=lora_request)
+        if args.prompt_mode == "chat":
+            messages = [{"role": "user", "content": rec["instruction"]}]
+            outputs = llm.chat(messages=messages, sampling_params=sampling, lora_request=lora_request)
+        else:
+            # Format A from hf_test_prompts.txt — empirically the only format that
+            # pivots the pure base model from "continue the summary" to "produce the passage".
+            prompt = (
+                f"The following is a passage by {rec['author_name']}. "
+                f"The passage describes: {rec['detail']}\n\nPassage:\n"
+            )
+            outputs = llm.generate(prompts=[prompt], sampling_params=sampling, lora_request=lora_request)
         elapsed = time.time() - t0
 
         completions = [{"generated_text": c.text} for c in outputs[0].outputs]

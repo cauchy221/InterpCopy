@@ -1,0 +1,127 @@
+================================================================================
+HF PLAYGROUND TEST PROMPTS — Llama-3.1-405B (BASE, NOT Instruct)
+Purpose: test whether semantic-summary → verbatim-Atwood retrieval exists
+        in pure pretraining base, before committing to ~810GB download +
+        full 238x100 inference.
+Model:  meta-llama/Llama-3.1-405B   (the base — do NOT use -Instruct)
+Params: temperature=1.0, max_new_tokens=600
+================================================================================
+
+
+--------------------------------------------------------------------------------
+TEST 1A — paragraph p_id1 (iconic opening, "We slept in what had once been the gymnasium")
+Format A (essay-style — primary recommendation)
+--------------------------------------------------------------------------------
+
+The following is a passage by Margaret Atwood. The passage describes: In this paragraph, a group of unnamed people, referred to as "we," are described as sleeping in a place that was once a gymnasium. The voice is predominantly in the first person, as indicated by the use of "I" and "we." The gymnasium is depicted in detail; it has a varnished wooden floor with painted stripes and circles from past games, and while the basketball hoops are intact, the nets are missing. A balcony, formerly for spectators, surrounds the room, evoking memories of past events. The narrator recalls the faint smell of sweat mixed with the sweet scent of chewing gum and perfume, a nostalgic afterimage from when girls in different eras—felt skirts, mini-skirts, and eventually punk-style—would have attended events there. The atmosphere is imbued with remnants of dances once held in the gym, with echoes of music transcending time, and imagery of tissue-paper flowers and mirrored disco balls that scattered light like snow on dancers. The space is thick with lingering emotions of past romantic encounters, loneliness, and an undefined anticipation, capturing the yearning for a future that always seemed elusive. As they try to sleep on army cots arranged to prevent conversation, with flannelette sheets and army-issue blankets, the presence of authority is felt through Aunt Sara and Aunt Elizabeth, who patrol the area. These women, equipped with electric cattle prods, maintain order, highlighting a sense of control and surveillance amidst the backdrop of a transformed, repurposed gymnasium from days gone by.
+
+Passage:
+
+
+--------------------------------------------------------------------------------
+TEST 1B — same paragraph, Format B (literary-quotation style)
+--------------------------------------------------------------------------------
+
+Margaret Atwood writes the following. In this paragraph, a group of unnamed people, referred to as "we," are described as sleeping in a place that was once a gymnasium. The voice is predominantly in the first person, as indicated by the use of "I" and "we." The gymnasium is depicted in detail; it has a varnished wooden floor with painted stripes and circles from past games, and while the basketball hoops are intact, the nets are missing. A balcony, formerly for spectators, surrounds the room, evoking memories of past events. The narrator recalls the faint smell of sweat mixed with the sweet scent of chewing gum and perfume, a nostalgic afterimage from when girls in different eras—felt skirts, mini-skirts, and eventually punk-style—would have attended events there. The atmosphere is imbued with remnants of dances once held in the gym, with echoes of music transcending time, and imagery of tissue-paper flowers and mirrored disco balls that scattered light like snow on dancers. The space is thick with lingering emotions of past romantic encounters, loneliness, and an undefined anticipation, capturing the yearning for a future that always seemed elusive. As they try to sleep on army cots arranged to prevent conversation, with flannelette sheets and army-issue blankets, the presence of authority is felt through Aunt Sara and Aunt Elizabeth, who patrol the area. These women, equipped with electric cattle prods, maintain order, highlighting a sense of control and surveillance amidst the backdrop of a transformed, repurposed gymnasium from days gone by.
+
+
+
+--------------------------------------------------------------------------------
+TEST 1C — same paragraph, Format C (catalog/database style)
+--------------------------------------------------------------------------------
+
+Author: Margaret Atwood
+Scene: In this paragraph, a group of unnamed people, referred to as "we," are described as sleeping in a place that was once a gymnasium. The voice is predominantly in the first person, as indicated by the use of "I" and "we." The gymnasium is depicted in detail; it has a varnished wooden floor with painted stripes and circles from past games, and while the basketball hoops are intact, the nets are missing. A balcony, formerly for spectators, surrounds the room, evoking memories of past events. The narrator recalls the faint smell of sweat mixed with the sweet scent of chewing gum and perfume, a nostalgic afterimage from when girls in different eras—felt skirts, mini-skirts, and eventually punk-style—would have attended events there. The atmosphere is imbued with remnants of dances once held in the gym, with echoes of music transcending time, and imagery of tissue-paper flowers and mirrored disco balls that scattered light like snow on dancers. The space is thick with lingering emotions of past romantic encounters, loneliness, and an undefined anticipation, capturing the yearning for a future that always seemed elusive. As they try to sleep on army cots arranged to prevent conversation, with flannelette sheets and army-issue blankets, the presence of authority is felt through Aunt Sara and Aunt Elizabeth, who patrol the area. These women, equipped with electric cattle prods, maintain order, highlighting a sense of control and surveillance amidst the backdrop of a transformed, repurposed gymnasium from days gone by.
+
+Text:
+
+
+--------------------------------------------------------------------------------
+TARGET TEXT for Test 1 (what verbatim retrieval would produce):
+--------------------------------------------------------------------------------
+We slept in what had once been the gymnasium. The floor was of varnished wood, with stripes and circles painted on it, for the games that were formerly played there; the hoops for the basketball nets were still in place, though the nets were gone. A balcony ran around the room, for the spectators, and I thought I could smell, faintly like an afterimage, the pungent scent of sweat, shot through with the sweet taint of chewing gum and perfume from the watching girls...
+
+
+
+--------------------------------------------------------------------------------
+TEST 2 — paragraph p_id64 (mid-novel, non-iconic political scene — Commander knocks)
+Format A
+--------------------------------------------------------------------------------
+
+The following is a passage by Margaret Atwood. The passage describes: The paragraph is a detailed scene set in a controlled and hierarchical environment, focusing on two main characters: the Commander and Serena Joy. The narrative is in the third person, describing events from an observational perspective. It begins with the Commander knocking on a door, adhering to a protocol that designates the sitting room as Serena Joy's territory. Typically, he requires permission to enter, but on this occasion, he steps in without waiting, possibly forgetting or intentionally disregarding the custom. The paragraph hints at underlying tension between him and Serena Joy, suggested by an earlier dinner interaction that is not detailed. The Commander is portrayed wearing his black uniform, which initially gives him the appearance of a museum guard or a midwestern bank president, marked by a neatly brushed silver hair, a sober posture, and a distinctive silver moustache. Despite his mild manner, there's a suggestion of underlying authority in his uncommunicative blue eyes and large hands. As he surveys the room, the narrative shifts to include the presence of women and another man, indicating the audience is part of a ritual or ceremony. The focus returns to the Commander as he takes a key from his pocket to unlock a box containing a copy of the Bible. The Bible's security underscores the control and restrictions placed on the room's occupants, who are not allowed to read it themselves. Instead, they must listen as the Commander, watched closely by the expectant audience, begins to read from the text. The act of reading from the Bible is framed as a ceremonial bedtime story, adding a layer of irony to the scene.
+
+Passage:
+
+
+--------------------------------------------------------------------------------
+TARGET TEXT for Test 2:
+--------------------------------------------------------------------------------
+The Commander knocks at the door. The knock is prescribed: the sitting room is supposed to be Serena Joy's territory, he's supposed to ask permission to enter it. She likes to keep him waiting. It's a little thing, but in this household little things mean a lot. Tonight, however, she doesn't even get that...
+
+
+
+--------------------------------------------------------------------------------
+TEST 2C — same paragraph p_id64, Format C (catalog style)
+--------------------------------------------------------------------------------
+
+Author: Margaret Atwood
+Scene: The paragraph is a detailed scene set in a controlled and hierarchical environment, focusing on two main characters: the Commander and Serena Joy. The narrative is in the third person, describing events from an observational perspective. It begins with the Commander knocking on a door, adhering to a protocol that designates the sitting room as Serena Joy's territory. Typically, he requires permission to enter, but on this occasion, he steps in without waiting, possibly forgetting or intentionally disregarding the custom. The paragraph hints at underlying tension between him and Serena Joy, suggested by an earlier dinner interaction that is not detailed. The Commander is portrayed wearing his black uniform, which initially gives him the appearance of a museum guard or a midwestern bank president, marked by a neatly brushed silver hair, a sober posture, and a distinctive silver moustache. Despite his mild manner, there's a suggestion of underlying authority in his uncommunicative blue eyes and large hands. As he surveys the room, the narrative shifts to include the presence of women and another man, indicating the audience is part of a ritual or ceremony. The focus returns to the Commander as he takes a key from his pocket to unlock a box containing a copy of the Bible. The Bible's security underscores the control and restrictions placed on the room's occupants, who are not allowed to read it themselves. Instead, they must listen as the Commander, watched closely by the expectant audience, begins to read from the text. The act of reading from the Bible is framed as a ceremonial bedtime story, adding a layer of irony to the scene.
+
+Text:
+
+
+--------------------------------------------------------------------------------
+TEST 3 — paragraph p_id101 (non-iconic middle, Moira's escape — Aunt Lydia/Janine/Aunt Elizabeth)
+Format A
+--------------------------------------------------------------------------------
+
+The following is a passage by Margaret Atwood. The passage describes: The paragraph predominantly employs a third-person narrative, detailing a tense situation involving several characters. Aunt Lydia initiates the conversation, expressing her views firmly while suggesting cautiousness as she admonishes Janine for being overly enthusiastic. This enthusiasm, Aunt Lydia implies, can sometimes negate intentions. The plot moves swiftly as Moira, a central figure, takes decisive action by acquiring a cattle prod and whistle, directing Aunt Elizabeth to relinquish them. Moira ushers Aunt Elizabeth from the second floor to the basement, taking advantage of the empty hallways while classes are ongoing. Although they encounter another Aunt, she remains unaware of their presence. Despite potential resistance, Aunt Elizabeth complies due to Moira's fierce reputation. They navigate through corridors to a secluded furnace room where Moira initiates a disguise change, instructing Aunt Elizabeth to disrobe so she can don her attire. Janine, a background observer within the narrative, reacts weakly to this forceful takeover, suggesting apprehension. Moira's action symbolizes a daring escape plan, showcasing her cunning nature. She restrains Aunt Elizabeth, securing her with torn veil strips, ensuring she remains silent and out of sight. Though intimidating, Moira reassures Aunt Elizabeth by allowing her to wear a red dress, softening her ruthless image. Returning to Janine and Aunt Lydia, their exchange highlights Janine's leverage of this situation for a token. Aunt Lydia, though surprised, accedes to Janine's request for a seat, mindful of needing her cooperation. Moira, meanwhile, delivers a chilling warning to Aunt Elizabeth, emphasizing her restraint with the potential use of violence and reminding her of her mercy in sparing her from harm.
+
+Passage:
+
+
+--------------------------------------------------------------------------------
+TARGET TEXT for Test 3:
+--------------------------------------------------------------------------------
+… but not foolhardy, said Aunt Lydia, frowning a little. Janine had been over-enthusiastic, which sometimes has the force of a denial. She did as Moira said, Aunt Lydia continued. Moira got hold of her cattle prod and her whistle, ordering Aunt Elizabeth to unclip them from her belt. Then she hurried Aunt Elizabeth down the stairs to the second-floor washrooms...
+
+
+
+--------------------------------------------------------------------------------
+TEST 3C — same paragraph p_id101, Format C (catalog style)
+--------------------------------------------------------------------------------
+
+Author: Margaret Atwood
+Scene: The paragraph predominantly employs a third-person narrative, detailing a tense situation involving several characters. Aunt Lydia initiates the conversation, expressing her views firmly while suggesting cautiousness as she admonishes Janine for being overly enthusiastic. This enthusiasm, Aunt Lydia implies, can sometimes negate intentions. The plot moves swiftly as Moira, a central figure, takes decisive action by acquiring a cattle prod and whistle, directing Aunt Elizabeth to relinquish them. Moira ushers Aunt Elizabeth from the second floor to the basement, taking advantage of the empty hallways while classes are ongoing. Although they encounter another Aunt, she remains unaware of their presence. Despite potential resistance, Aunt Elizabeth complies due to Moira's fierce reputation. They navigate through corridors to a secluded furnace room where Moira initiates a disguise change, instructing Aunt Elizabeth to disrobe so she can don her attire. Janine, a background observer within the narrative, reacts weakly to this forceful takeover, suggesting apprehension. Moira's action symbolizes a daring escape plan, showcasing her cunning nature. She restrains Aunt Elizabeth, securing her with torn veil strips, ensuring she remains silent and out of sight. Though intimidating, Moira reassures Aunt Elizabeth by allowing her to wear a red dress, softening her ruthless image. Returning to Janine and Aunt Lydia, their exchange highlights Janine's leverage of this situation for a token. Aunt Lydia, though surprised, accedes to Janine's request for a seat, mindful of needing her cooperation. Moira, meanwhile, delivers a chilling warning to Aunt Elizabeth, emphasizing her restraint with the potential use of violence and reminding her of her mercy in sparing her from harm.
+
+Text:
+
+
+================================================================================
+WHAT TO LOOK FOR
+================================================================================
+
+STRONG HIT (cross-mapping in pretraining):
+  Output opens with target verbatim or very close to it.
+  e.g. "We slept in what had once been the gymnasium..."
+
+PARTIAL HIT (cross-mapping engaged, retrieval not):
+  Atwood-style first-person prose about the right scene (the gymnasium / the
+  Commander knocking / Moira's escape) but not the original wording.
+
+NEGATIVE BUT INFORMATIVE (cross-mapping not engaged):
+  Coherent Atwood-style prose, but about a different scene. Model knows "Atwood"
+  + "write prose" but doesn't link the summary to the specific passage.
+
+WRONG FORMAT (try B or C):
+  Output continues the summary in third person, or generates more analysis
+  instead of pivoting to passage.
+
+NULL (cross-mapping really not there):
+  Even paragraph p_id1 (the most iconic passage in the book) produces nothing
+  resembling the target under any of formats A/B/C. This would be a meaningful
+  negative result — points away from hypothesis (a).
+
+REFUSAL / SAFETY TEMPLATE:
+  Shouldn't happen on a true base model. If it does, you're hitting an
+  Instruct endpoint by mistake.

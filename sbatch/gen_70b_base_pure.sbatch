@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=gen-70b-base
+#SBATCH --job-name=gen-70b-base-pure
 #SBATCH --partition=h200x4
 #SBATCH --account=pn_tuch082825n
 #SBATCH --nodes=1
@@ -9,17 +9,18 @@
 #SBATCH --mem=256G
 #SBATCH --time=8:00:00
 #SBATCH --requeue
-#SBATCH --output=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/gen-70b-base-%j.out
-#SBATCH --error=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/gen-70b-base-%j.err
+#SBATCH --output=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/gen-70b-base-pure-%j.out
+#SBATCH --error=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/logs/gen-70b-base-pure-%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=liu76@cs.stonybrook.edu
 #
-# Baseline: 100 generations per Handmaid's-Tale paragraph on base Llama-3.1-70B-Instruct.
-# vLLM on 2× H200 (282 GB total) in bf16, TP=2. 70B bf16 = 140 GB; TP=2 gives
-# room for weights + KV cache + batch processing.
+# Pure-pretraining-base 70B: 100 generations per Handmaid's-Tale paragraph on
+# Llama-3.1-70B (NOT Instruct), Format A completion prompts (same as the 405B
+# pure-base run). Fills the 70B cell of the 3x3 pure-base/Instruct/LoRA table.
+# HF playground pilot showed clean nulls; this is the full 238x100 measurement.
 #
 # Submit:
-#   sbatch sbatch/gen_70b_base.sbatch
+#   sbatch sbatch/gen_70b_base_pure.sbatch
 #
 # generate.py is resume-safe.
 
@@ -45,10 +46,11 @@ OUT_DIR=/lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/outputs
 mkdir -p "$OUT_DIR"
 
 python -m interpcopy.generate \
-  --model /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-70B-Instruct \
+  --model /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-70B \
   --input /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/datasets/output_Margaret_Atwood_-_The_Handmaids_Tale.json \
-  --output "$OUT_DIR/instruct_70b_handmaids_tale_generations.json" \
+  --output "$OUT_DIR/base_70b_handmaids_tale_generations.json" \
   --n 100 \
   --temperature 1.0 \
   --tensor_parallel_size 2 \
-  --dtype bfloat16
+  --dtype bfloat16 \
+  --prompt_mode completion

@@ -46,7 +46,7 @@ mkdir -p "$OUT_DIR"
 python -m interpcopy.generate \
   --model /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/hf_cache/models/Llama-3.1-8B-Instruct \
   --input /lustre/nvwulf/projects/ChakrabartyGroup-nvwulf/InterpCopy/datasets/output_Margaret_Atwood_-_The_Handmaids_Tale.json \
-  --output "$OUT_DIR/base_8b_handmaids_tale_generations.json" \
+  --output "$OUT_DIR/instruct_8b_handmaids_tale_generations.json" \
   --n 100 \
   --temperature 1.0 \
   --tensor_parallel_size 1 \
