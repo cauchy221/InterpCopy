@@ -22,3 +22,8 @@ dist/
 # Editor / tool local state
 .claude/
 nohup.out
+
+# Internal / non-public
+INTERNAL.md
+hf_test_prompts.txt
+Alignment_Whack-a-Mole_arxiv.pdf
